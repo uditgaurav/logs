@@ -1,0 +1,89 @@
+W0408 04:28:30.873149       1 client_config.go:541] Neither --kubeconfig nor --master was specified.  Using the inClusterConfig.  This might not work.
+time="2021-04-08T04:28:30Z" level=info msg="Experiment Name: ec2-terminate"
+time="2021-04-08T04:28:30Z" level=info msg="[PreReq]: Getting the ENV for the  experiment"
+time="2021-04-08T04:28:30Z" level=info msg="[PreReq]: Updating the chaos result of ec2-terminate experiment (SOT)"
+time="2021-04-08T04:28:30Z" level=info msg="The application information is as follows" Label= Chaos Duration=30 Ramp Time=0 Namespace=default
+time="2021-04-08T04:28:30Z" level=info msg="[Status]: Verify that the AUT (Application Under Test) is running (pre-chaos)"
+time="2021-04-08T04:28:30Z" level=info msg="[Status]: Checking whether application containers are in ready state"
+time="2021-04-08T04:28:32Z" level=info msg="[Status]: The Container status are as follows" container=ec2-terminate-qgwea8 Pod=ec2-terminate-qgwea8-2m4pm Readiness=true
+time="2021-04-08T04:28:32Z" level=info msg="[Status]: The Container status are as follows" container=nginx Pod=nginx-86c57db685-wqlf8 Readiness=true
+time="2021-04-08T04:28:32Z" level=info msg="[Status]: The Container status are as follows" container=chaos-runner Pod=nginx-chaos-runner Readiness=true
+time="2021-04-08T04:28:34Z" level=info msg="[Status]: Checking whether application pods are in running state"
+time="2021-04-08T04:28:34Z" level=info msg="[Status]: The status of Pods are as follows" Status=Running Pod=ec2-terminate-qgwea8-2m4pm
+time="2021-04-08T04:28:34Z" level=info msg="[Status]: The status of Pods are as follows" Pod=nginx-86c57db685-wqlf8 Status=Running
+time="2021-04-08T04:28:34Z" level=info msg="[Status]: The status of Pods are as follows" Pod=nginx-chaos-runner Status=Running
+time="2021-04-08T04:28:37Z" level=info msg="[Info]: The instances under chaos(IUC) are: [i-0b2b33f8e7501be93 i-012539ad7a0eda358 i-091f0cb3803d47e96 i-0f1824af9d28f42e3]"
+time="2021-04-08T04:28:38Z" level=info msg="[Status]: EC2 instance is in running state"
+time="2021-04-08T04:28:38Z" level=info msg="[Chaos]:Number of Instance targeted: 4"
+time="2021-04-08T04:28:38Z" level=info msg="Target instanceID list, [i-091f0cb3803d47e96 i-0f1824af9d28f42e3 i-0b2b33f8e7501be93 i-012539ad7a0eda358]"
+time="2021-04-08T04:28:38Z" level=info msg="[Chaos]: Stoping the desired EC2 instance"
+time="2021-04-08T04:28:38Z" level=info msg="Stopping an ec2 instance:" InstanceId=i-091f0cb3803d47e96 CurrentState=stopping PreviousState=running
+time="2021-04-08T04:28:38Z" level=info msg="[Chaos]: Stoping the desired EC2 instance"
+time="2021-04-08T04:28:39Z" level=info msg="Stopping an ec2 instance:" PreviousState=running InstanceId=i-0f1824af9d28f42e3 CurrentState=stopping
+time="2021-04-08T04:28:39Z" level=info msg="[Chaos]: Stoping the desired EC2 instance"
+time="2021-04-08T04:28:39Z" level=info msg="Stopping an ec2 instance:" CurrentState=stopping PreviousState=running InstanceId=i-0b2b33f8e7501be93
+time="2021-04-08T04:28:39Z" level=info msg="[Chaos]: Stoping the desired EC2 instance"
+time="2021-04-08T04:28:40Z" level=info msg="Stopping an ec2 instance:" PreviousState=running InstanceId=i-012539ad7a0eda358 CurrentState=stopping
+time="2021-04-08T04:28:40Z" level=info msg="[Wait]: Wait for EC2 instance to come in stopped state"
+time="2021-04-08T04:28:40Z" level=info msg="[Status]: Checking EC2 instance status"
+time="2021-04-08T04:28:40Z" level=info msg="The instance state is stopping"
+time="2021-04-08T04:28:42Z" level=info msg="The instance state is stopping"
+time="2021-04-08T04:28:44Z" level=info msg="The instance state is stopping"
+time="2021-04-08T04:28:47Z" level=info msg="The instance state is stopping"
+time="2021-04-08T04:28:49Z" level=info msg="The instance state is stopping"
+time="2021-04-08T04:28:51Z" level=info msg="The instance state is stopping"
+time="2021-04-08T04:28:53Z" level=info msg="The instance state is stopping"
+time="2021-04-08T04:28:55Z" level=info msg="The instance state is stopping"
+time="2021-04-08T04:28:57Z" level=info msg="The instance state is stopping"
+time="2021-04-08T04:29:00Z" level=info msg="The instance state is stopping"
+time="2021-04-08T04:29:02Z" level=info msg="The instance state is stopped"
+time="2021-04-08T04:29:04Z" level=info msg="[Wait]: Wait for EC2 instance to come in stopped state"
+time="2021-04-08T04:29:04Z" level=info msg="[Status]: Checking EC2 instance status"
+time="2021-04-08T04:29:04Z" level=info msg="The instance state is stopped"
+time="2021-04-08T04:29:06Z" level=info msg="[Wait]: Wait for EC2 instance to come in stopped state"
+time="2021-04-08T04:29:06Z" level=info msg="[Status]: Checking EC2 instance status"
+time="2021-04-08T04:29:06Z" level=info msg="The instance state is stopped"
+time="2021-04-08T04:29:08Z" level=info msg="[Wait]: Wait for EC2 instance to come in stopped state"
+time="2021-04-08T04:29:08Z" level=info msg="[Status]: Checking EC2 instance status"
+time="2021-04-08T04:29:09Z" level=info msg="The instance state is stopped"
+time="2021-04-08T04:29:11Z" level=info msg="[Wait]: Waiting for chaos interval of 30s before starting the instance"
+time="2021-04-08T04:29:41Z" level=info msg="[Chaos]: Starting back the EC2 instance"
+time="2021-04-08T04:29:41Z" level=info msg="Starting ec2 instance:" CurrentState=pending PreviousState=stopped InstanceId=i-091f0cb3803d47e96
+time="2021-04-08T04:29:41Z" level=info msg="[Chaos]: Starting back the EC2 instance"
+time="2021-04-08T04:29:42Z" level=info msg="Starting ec2 instance:" CurrentState=pending PreviousState=stopped InstanceId=i-0f1824af9d28f42e3
+time="2021-04-08T04:29:42Z" level=info msg="[Chaos]: Starting back the EC2 instance"
+time="2021-04-08T04:29:42Z" level=info msg="Starting ec2 instance:" CurrentState=pending PreviousState=stopped InstanceId=i-0b2b33f8e7501be93
+time="2021-04-08T04:29:42Z" level=info msg="[Chaos]: Starting back the EC2 instance"
+time="2021-04-08T04:29:43Z" level=info msg="Starting ec2 instance:" PreviousState=stopped InstanceId=i-012539ad7a0eda358 CurrentState=pending
+time="2021-04-08T04:29:43Z" level=info msg="[Wait]: Wait for EC2 instance to get in running state"
+time="2021-04-08T04:29:43Z" level=info msg="[Status]: Checking EC2 instance status"
+time="2021-04-08T04:29:43Z" level=info msg="The instance state is pending"
+time="2021-04-08T04:29:45Z" level=info msg="The instance state is pending"
+time="2021-04-08T04:29:47Z" level=info msg="The instance state is pending"
+time="2021-04-08T04:29:50Z" level=info msg="The instance state is pending"
+time="2021-04-08T04:29:52Z" level=info msg="The instance state is running"
+time="2021-04-08T04:29:54Z" level=info msg="[Wait]: Wait for EC2 instance to get in running state"
+time="2021-04-08T04:29:54Z" level=info msg="[Status]: Checking EC2 instance status"
+time="2021-04-08T04:29:54Z" level=info msg="The instance state is pending"
+time="2021-04-08T04:29:56Z" level=info msg="The instance state is pending"
+time="2021-04-08T04:29:58Z" level=info msg="The instance state is running"
+time="2021-04-08T04:30:00Z" level=info msg="[Wait]: Wait for EC2 instance to get in running state"
+time="2021-04-08T04:30:00Z" level=info msg="[Status]: Checking EC2 instance status"
+time="2021-04-08T04:30:01Z" level=info msg="The instance state is running"
+time="2021-04-08T04:30:03Z" level=info msg="[Wait]: Wait for EC2 instance to get in running state"
+time="2021-04-08T04:30:03Z" level=info msg="[Status]: Checking EC2 instance status"
+time="2021-04-08T04:30:03Z" level=info msg="The instance state is running"
+time="2021-04-08T04:30:05Z" level=info msg="[Chaos]: Time is up for experiment: ec2-terminate"
+time="2021-04-08T04:30:05Z" level=info msg="[Confirmation]: EC2 terminate chaos has been injected successfully"
+time="2021-04-08T04:30:05Z" level=info msg="[Info]: The instances under chaos(IUC) are: [i-0b2b33f8e7501be93 i-012539ad7a0eda358 i-091f0cb3803d47e96 i-0f1824af9d28f42e3]"
+time="2021-04-08T04:30:06Z" level=info msg="[Status]: EC2 instance is in running state (post chaos)"
+time="2021-04-08T04:30:06Z" level=info msg="[Status]: Verify that the AUT (Application Under Test) is running (post-chaos)"
+time="2021-04-08T04:30:06Z" level=info msg="[Status]: Checking whether application containers are in ready state"
+time="2021-04-08T04:30:06Z" level=info msg="[Status]: The Container status are as follows" container=ec2-terminate-qgwea8 Pod=ec2-terminate-qgwea8-2m4pm Readiness=true
+time="2021-04-08T04:30:06Z" level=info msg="[Status]: The Container status are as follows" container=nginx Pod=nginx-86c57db685-wqlf8 Readiness=true
+time="2021-04-08T04:30:06Z" level=info msg="[Status]: The Container status are as follows" container=chaos-runner Pod=nginx-chaos-runner Readiness=true
+time="2021-04-08T04:30:08Z" level=info msg="[Status]: Checking whether application pods are in running state"
+time="2021-04-08T04:30:08Z" level=info msg="[Status]: The status of Pods are as follows" Pod=ec2-terminate-qgwea8-2m4pm Status=Running
+time="2021-04-08T04:30:08Z" level=info msg="[Status]: The status of Pods are as follows" Pod=nginx-86c57db685-wqlf8 Status=Running
+time="2021-04-08T04:30:08Z" level=info msg="[Status]: The status of Pods are as follows" Status=Running Pod=nginx-chaos-runner
+time="2021-04-08T04:30:10Z" level=info msg="[The End]: Updating the chaos result of ec2-terminate experiment (EOT)"
