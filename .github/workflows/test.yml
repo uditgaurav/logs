@@ -1,9 +1,6 @@
 ---
 name: Component-Pipeline
-on:
-  schedule:
-    # * is a special character in YAML so you have to quote this string
-    - cron:  '*/5 * * * *'
+on: workflow_dispatch
     
 defaults:
   run:
@@ -26,7 +23,7 @@ jobs:
         IMAGE_PULL_POLICY: "${{ github.event.inputs.imagePullPolicy }}"
         KUBECONFIG: /root/.kube/config
         
-    runs-on: [self-hosted,component]
+    runs-on: ubuntu:latest
     ## Changing the working directory to image path we provided
     ## As the default path is repository checkout path.      
     steps:
@@ -34,3 +31,4 @@ jobs:
         run: |
           echo "Hello World!!!"
           echo "date +"%T""
+          echo "Name: {{ secrets.Name }}"
