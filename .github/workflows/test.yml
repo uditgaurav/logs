@@ -11,17 +11,6 @@ jobs:
 ### Setup Litmus
 
   Setup_Litmus_Infra:
-    container: 
-      image: "${{ github.event.inputs.e2eTestImage }}"
-      volumes:
-        - /home/ubuntu/.kube:/root/.kube
-        - /etc/kubernetes:/etc/kubernetes
-      env:
-        OPERATOR_IMAGE: "${{ github.event.inputs.operatorImage }}"
-        OPERATOR_NAME: "${{ github.event.inputs.operatorName }}"        
-        RUNNER_IMAGE: "${{ github.event.inputs.runnerImage }}"
-        IMAGE_PULL_POLICY: "${{ github.event.inputs.imagePullPolicy }}"
-        KUBECONFIG: /root/.kube/config
         
     runs-on: ubuntu-latest
     ## Changing the working directory to image path we provided
