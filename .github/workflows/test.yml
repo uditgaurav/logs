@@ -14,10 +14,12 @@ jobs:
         
     runs-on: ubuntu-latest
     ## Changing the working directory to image path we provided
-    ## As the default path is repository checkout path.      
+    ## As the default path is repository checkout path. 
+    environment: 
+      name: IP
     steps:
       - name: Litmus Infra Setup In Cluster-1
         run: |
           echo "Hello World!!!"
           echo "date +"%T""
-          echo "Name: {{ secrets.Name }}"
+          echo "Name: $Name"
