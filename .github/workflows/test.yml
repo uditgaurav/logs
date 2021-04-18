@@ -1,10 +1,9 @@
 ---
 name: Component-Pipeline
 on:
-  workflow_dispatch:
-    inputs:
-      e2eTestImage:
-        default: 'litmuschaos/litmus-e2e:ci'
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron:  '** * * * *'
     
 defaults:
   run:
@@ -34,3 +33,4 @@ jobs:
       - name: Litmus Infra Setup In Cluster-1
         run: |
           echo "Hello World!!!"
+          echo "date +"%T""
