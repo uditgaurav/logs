@@ -23,7 +23,7 @@ jobs:
         IMAGE_PULL_POLICY: "${{ github.event.inputs.imagePullPolicy }}"
         KUBECONFIG: /root/.kube/config
         
-    runs-on: ubuntu:latest
+    runs-on: ubuntu-latest
     ## Changing the working directory to image path we provided
     ## As the default path is repository checkout path.      
     steps:
