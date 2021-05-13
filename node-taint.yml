@@ -21,7 +21,7 @@ spec:
             kubernetes.io/hostname: 'node02'        
           env:
             # set target node name
-            - name: TARGET_NODE
+            - name: TARGET_NODES
               value: 'node-01'
 
             - name: TAINTS
