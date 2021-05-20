@@ -32,6 +32,10 @@ jobs:
     name: upload artifacts
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout the repository
+        uses: actions/checkout@master
+      - name: Generate the artifacts
+        uses: skx/github-action-build@master    
       - name: Upload the artifacts
         uses: skx/github-action-publish-binaries@release-1.3
         env:
@@ -39,5 +43,6 @@ jobs:
         with:
           releaseId: 43319757
 #          releaseId: ${{ needs.create_release.outputs.id }}          
-          args: 'dns_interceptor'    
+          args: 'custom/nsutil/nsutil'
+          
           
