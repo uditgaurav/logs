@@ -19,12 +19,11 @@ jobs:
   create_release:
     name: "create_release"
     runs-on: "ubuntu-latest"
-    outputs:
-      id: ${{ steps.release-id.outputs.id }}    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - uses: ncipollo/release-action@v1
+      - uses: actions/checkout@v2
+      
+      - name: create release along with artifact
+        uses: ncipollo/release-action@v1
         with:
           artifacts: ""
           body: "${{ github.event.inputs.release_title }}"
