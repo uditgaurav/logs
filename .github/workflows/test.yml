@@ -1,25 +1,34 @@
 ---
-name: Component-Pipeline
-on: workflow_dispatch
-    
-defaults:
-  run:
-    working-directory: /go/src   
-      
+name: AutoRelease
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_title:
+        description: 'release title'
+        required: true
+      release_tag:
+        description: 'release tag'
+        required: true
+
+
 jobs:
+  pre-release:
+    name: "Pre Release"
+    runs-on: "ubuntu-latest"
 
-### Setup Litmus
-
-  Setup_Litmus_Infra:
-        
-    runs-on: ubuntu-latest
-    ## Changing the working directory to image path we provided
-    ## As the default path is repository checkout path. 
-    environment: 
-      name: IP
     steps:
-      - name: Litmus Infra Setup In Cluster-1
+      # ...
+      - name: "Build & test"
         run: |
-          echo "Hello World!!!"
-          echo "date +"%T""
-          echo "Name: {{ secrets.Name}} "
+          echo "done!"
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: false
+          title: "Development Build"
+          files: |
+            custom/dns_interceptor/dns_interceptor
+            custom/pause/pause
