@@ -18,25 +18,19 @@ jobs:
     outputs:
       id: ${{ steps.release-id.outputs.id }}    
     steps:
-      - uses: "marvinpinto/action-automatic-releases@latest"
+      - name: create release
+        id: create_release
+        uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "${{ github.event.inputs.release_tag }}"
           prerelease: false
           title: "${{ github.event.inputs.release_title }}"
-      - id: set-release-id
-        run: echo "::set-output name=release-id::$(curl -s 'https://api.github.com/repos/uditgaurav/logs/releases/latest' | jq -r '.id')"
+#       - id: set-release-id
+#         run: echo "::set-output name=release-id::$(curl -s 'https://api.github.com/repos/uditgaurav/logs/releases/latest' | jq -r '.id')"
         
-  upload_artifacts:
-    needs: [create_release]
-    name: upload artifacts
-    runs-on: ubuntu-latest
-    steps:
       - name: Checkout the repository
         uses: actions/checkout@master
-      - run: |
-          ls
-          pwd
           
       - name: Upload the artifacts
         uses: skx/github-action-publish-binaries@release-1.3
