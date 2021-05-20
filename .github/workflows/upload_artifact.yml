@@ -7,7 +7,6 @@ on:
 jobs:
   upload_artifacts:
     name: Upload Artifacts
-    needs: [create_release]
     runs-on: ubuntu-latest
     steps:
       - name: Upload the artifacts
