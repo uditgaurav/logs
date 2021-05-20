@@ -3,13 +3,17 @@ name: release
 
 on:
   workflow_dispatch:
-    inputs:
-#       release_title:
-#         description: 'release title'
-#         required: true
+    inputs:   
+      release_title:
+        description: 'release title'
+        required: true
       release_tag:
         description: 'release tag'
         required: true
+      release_notes:
+        description: 'provide release notes'     
+        required: false
+        default: ''         
 
 jobs:
   create_release:
@@ -22,8 +26,8 @@ jobs:
         uses: actions/checkout@v2
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "README.md"
-          body: "sample body"
+          artifacts: ""
+          body: "${{ github.event.inputs.release_title }}"
           token: ${{ secrets.GITHUB_TOKEN }}
-          name: "my first release"
+          name: "${{ github.event.inputs.release_title }}"
           tag: ${{ github.event.inputs.release_tag }}
