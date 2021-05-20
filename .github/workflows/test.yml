@@ -42,6 +42,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           releaseId: ${{ needs.create_release.outputs.id }}
-          args: |
-            custom/dns_interceptor/dns_interceptor
-            custom/pause/pause
+          args: 'custom/dns_interceptor/dns_interceptor'
