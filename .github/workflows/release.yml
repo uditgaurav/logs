@@ -37,6 +37,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          releaseId: ${{ needs.create_release.outputs.id }}
+          releaseId: 43319757
+#          releaseId: ${{ needs.create_release.outputs.id }}          
           args: 'custom/dns_interceptor/dns_interceptor'    
           
