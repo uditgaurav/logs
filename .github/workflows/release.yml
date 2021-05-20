@@ -45,6 +45,6 @@ jobs:
         with:
           releaseId: 43319757
 #          releaseId: ${{ needs.create_release.outputs.id }}          
-          args: '*.py'
+          args: 'README.md'
           
           
