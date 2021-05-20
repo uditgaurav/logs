@@ -2,7 +2,7 @@
 name: upload_artifact
 on:
   release:
-    types: [created] 
+    types: [created,published] 
 
 jobs:
   upload_artifacts:
