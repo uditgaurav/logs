@@ -13,7 +13,7 @@ on:
 
 jobs:
   create_release:
-    name: "create release"
+    name: "create_release"
     runs-on: "ubuntu-latest"
     outputs:
       id: ${{ steps.release-id.outputs.id }}    
@@ -28,7 +28,7 @@ jobs:
         run: echo "::set-output name=release-id::$(curl -s 'https://api.github.com/repos/uditgaurav/logs/releases/latest' | jq -r '.id')"
         
   upload_artifacts:
-    needs: create_release
+    needs: [create_release]
     name: upload artifacts
     runs-on: ubuntu-latest
     steps:
