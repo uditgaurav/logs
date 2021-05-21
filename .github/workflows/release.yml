@@ -26,7 +26,8 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: |
-             "custom/*/*-amd64,custom/*/*-arm64"
+             "custom/nsutil/nsutil-linux-amd64,custom/nsutil/nsutil-linux-arm64,custom/pause/pause-linux-amd64,custom/pause/pause-linux-arm64,
+              custom/promql-cli/promql-linux-amd64,custom/promql-cli/promql-linux-arm64"
           body: "${{ github.event.inputs.release_title }}"
           token: ${{ secrets.GITHUB_TOKEN }}
           name: "${{ github.event.inputs.release_title }}"
