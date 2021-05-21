@@ -25,7 +25,8 @@ jobs:
       - name: create release along with artifact
         uses: ncipollo/release-action@v1
         with:
-          artifacts: ""
+          artifacts: "*-amd64,*-arm64"
+          
           body: "${{ github.event.inputs.release_title }}"
           token: ${{ secrets.GITHUB_TOKEN }}
           name: "${{ github.event.inputs.release_title }}"
