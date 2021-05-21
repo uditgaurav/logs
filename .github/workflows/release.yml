@@ -26,7 +26,6 @@ jobs:
           mkdir -p binaries
           declare -a ARCH=("amd64" "arm64")
           for val in ${ARCH[@]}; do
-            cat deploy/cypress-test.yaml >> deploy/cypress-all-region-test.yaml
             mv custom/nsutil/nsutil-linux-${val} binaries/nsutil-linux-${val}
             mv custom/promql-cli/promql-linux-${val} binaries/promql-linux-${val}
             mv custom/pause/pause-linux-${val} binaries/pause-linux-${val}
