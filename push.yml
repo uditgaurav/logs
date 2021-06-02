@@ -1,0 +1,317 @@
+name: push-pipeline
+on:
+  push:
+    branches:
+      - master
+      - ^v[0-9]*.[0-9]*.x$
+    tags:
+      - "*"
+jobs:
+  backend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - shell: bash
+        run: |
+          cd litmus-portal
+          make backend-services-checks
+
+  frontend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - shell: bash
+        run: |
+          cd litmus-portal
+          make frontend-services-checks
+
+  get-envs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - shell: bash
+        run: |
+          img_tag=""
+          array=(`echo ${GITHUB_REF} | sed 's/\//\n/g'`)
+          if [ ${array[1]} == "tags" ]
+          then
+              echo "tag build"
+              img_tag=${GITHUB_REF#refs/*/}
+          else
+              echo "non tag build"
+              img_tag="ci"
+          fi
+          # This is a condition where image tag looks like "pull/<pullrequest-name>" during pull request build
+          NEW_IMG_TAG=`echo $img_tag | sed "s/\//-/g"`
+          echo $NEW_IMG_TAG
+          echo export IMG_TAG=$NEW_IMG_TAG >> env-vars
+          echo export GRAPHQL_SERVER_IMAGE="litmusportal-server" >> env-vars
+          echo export AUTHENTICATION_SERVER_IMAGE="litmusportal-auth-server" >> env-vars
+          echo export FRONTEND_IMAGE="litmusportal-frontend" >> env-vars
+          echo export SUBSCRIBER_IMAGE="litmusportal-subscriber" >> env-vars
+          echo export EVENT_TRACKER="litmusportal-event-tracker" >> env-vars
+
+      - name: Uploading envs
+        uses: actions/upload-artifact@v2
+        with:
+          name: env_artifact
+          path: env-vars
+
+  docker-build-and-push-graphql-server:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: litmus-portal/graphql-server    
+    needs:
+      - get-envs
+      - backend-checks
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Downloading image artficate
+        uses: actions/download-artifact@v2
+        with:
+          name: env_artifact
+          path: litmus-portal/graphql-server
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          version: latest
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set ENVs for graphql server docker image
+        id: vars
+        shell: bash
+        run: |
+          source env-vars
+          cd .. && make docker.buildx
+          echo "##[set-output name=tag;]$(echo ${IMG_TAG})"
+
+      - name: Build & push graphql server docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./build/Dockerfile
+          push: true
+          platforms: ${{ secrets.PLATFORMS }}
+          tags: |
+            ${{ steps.vars.outputs.tag }}
+
+  docker-build-and-push-authentication-server:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: litmus-portal/authentication
+
+    needs:
+      - get-envs
+      - backend-checks
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Downloading image artficate
+        uses: actions/download-artifact@v2
+        with:
+          name: env_artifact
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          version: latest
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set ENVs for auth server docker image
+        id: vars
+        shell: bash
+        run: |
+          source env-vars
+          cd .. && make docker.buildx
+          echo "##[set-output name=tag;]$(echo ${IMG_TAG})"
+
+      - name: Build & auth server docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: ${{ secrets.PLATFORMS }}
+          tags: |
+            ${{ steps.vars.outputs.tag }}
+
+  docker-build-and-push-subscriber:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: litmus-portal/cluster-agents/subscriber
+    needs:
+      - get-envs
+      - backend-checks
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Downloading image artficate
+        uses: actions/download-artifact@v2
+        with:
+          name: env_artifact
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          version: latest
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set ENVs for subscriber docker image
+        id: vars
+        shell: bash
+        run: |
+          source env-vars
+          cd ../.. && make docker.buildx
+          echo "##[set-output name=tag;]$(echo ${IMG_TAG})"
+          
+      - name: Build & push subscriber docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./build/Dockerfile
+          push: true
+          platforms: ${{ secrets.PLATFORMS }}
+          tags: |
+            ${{ steps.vars.outputs.tag }}
+
+  docker-build-and-push-event-tracker:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: litmus-portal/cluster-agents/event-tracker
+    needs:
+      - get-envs
+      - backend-checks
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Downloading image artficate
+        uses: actions/download-artifact@v2
+        with:
+          name: env_artifact
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          version: latest
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set ENVs for event tracker docker image
+        id: vars
+        shell: bash
+        run: |
+          source env-vars
+          cd ../.. && make docker.buildx
+          echo "##[set-output name=tag;]$(echo ${IMG_TAG})"
+
+      - name: Build & push event tracker docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: ${{ secrets.PLATFORMS }}
+          tags: |
+            ${{ steps.vars.outputs.tag }}          
+
+  ## TODO: the build time for multiarch frontend image is higher so it is used in release 
+  ## builds only need to optimize the build duration and also add it with ci tag
+  docker-build-and-push-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: litmus-portal/frontend
+    needs:
+      - get-envs
+      - frontend-checks
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Downloading image artficate
+        uses: actions/download-artifact@v2
+        with:
+          name: env_artifact
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          version: latest
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}  
+                   
+      - name: Set ENVs and push frontend docker image for ci
+        shell: bash
+        run: |
+          source env-vars
+          cd .. && make docker.buildx
+          cd frontend
+          timestamp=`date "+%s"`
+          echo "##[set-output name=tag;]$(echo ${IMG_TAG})"
+          echo "##[set-output name=timestamp;]$(echo ${timestamp})"
+          if [ "$IMG_TAG" == "ci" ]; then \
+             docker build . -f Dockerfile -t ${{ secrets.REPONAME }}/${FRONTEND_IMAGE}:${IMG_TAG} --build-arg REACT_APP_KB_CHAOS_VERSION=${IMG_TAG} --build-arg REACT_APP_BUILD_TIME="$timestamp" --build-arg REACT_APP_HUB_BRANCH_NAME="v1.13.x"  --build-arg TARGETARCH=amd64
+             docker push ${{ secrets.REPONAME }}/${FRONTEND_IMAGE}:${IMG_TAG}             
+          fi
+
+      - name: Push frontend docker image for release
+        if: ${{ steps.vars.outputs.tag }} != ci
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: ${{ secrets.PLATFORMS }}
+          tags: |
+            ${{ steps.vars.outputs.tag }}
+          build-args: |
+            REACT_APP_KB_CHAOS_VERSION=${{ steps.vars.outputs.tag }}
+            REACT_APP_BUILD_TIME=${{ steps.vars.outputs.timestamp }}
+            REACT_APP_HUB_BRANCH_NAME="v1.13.x"
