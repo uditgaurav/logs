@@ -31,6 +31,8 @@ jobs:
   Pod_Delete_Namespace_Mode:
     container:
       image: "${{ github.event.inputs.e2eTestImage }}"
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock:rw      
       env:
         OPERATOR_IMAGE: "${{ github.event.inputs.operatorImage }}"
         RUNNER_IMAGE: "${{ github.event.inputs.runnerImage }}"
@@ -44,14 +46,14 @@ jobs:
     steps:
 
       #Install and configure a kind cluster
-      - name: Installing Prerequisites (K3S Cluster)
-        env: 
-          KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+      - name: Installing Prerequisites (Kind Cluster)
         run: |
           apk add --update curl && rm -rf /var/cache/apk/*
-          curl -sfL https://get.k3s.io | sh -s - --docker --write-kubeconfig-mode 664
-          kubectl wait node --all --for condition=ready --timeout=90s
-          kubectl get nodes
+          apk add --update docker openrc && rc-update add docker boot
+          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.11.1/kind-linux-amd64
+          chmod +x ./kind
+          ./kind create cluster
+
           
       - name: Install Litmus In Namespace Mode
         run: |
