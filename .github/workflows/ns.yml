@@ -30,7 +30,7 @@ jobs:
 
   Pod_Delete_Namespace_Mode:
     container:
-      image: "${{ github.event.inputs.e2eTestImage }}"a Setup In Cluster-1
+      image: "${{ github.event.inputs.e2eTestImage }}"
       env:
         OPERATOR_IMAGE: "${{ github.event.inputs.operatorImage }}"
         RUNNER_IMAGE: "${{ github.event.inputs.runnerImage }}"
