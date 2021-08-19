@@ -42,11 +42,4 @@ echo
 echo "kubectl describe chaosresult -n ${CHAOS_NAMESPACE}"
 kubectl describe chaosresult -n ${CHAOS_NAMESPACE} || true
 echo
-echo "####################################################"
-echo "############ Printing Operator logs ################"
-echo "####################################################"
-echo
-operator_name=$(kubectl get pods -n litmus -l app.kubernetes.io/component=operator --no-headers | awk '{print$1}')
-kubectl logs $operator_name -n litmus > logs.txt
-cat logs.txt
-echo
+
