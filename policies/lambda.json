@@ -1,0 +1,20 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "lambda:ListEventSourceMappings",
+                "lambda:DeleteEventSourceMapping",
+                "lambda:UpdateEventSourceMapping",
+                "lambda:CreateEventSourceMapping",
+                "lambda:UpdateFunctionConfiguration",
+                "lambda:GetFunctionConcurrency",
+                "lambda:GetFunction",
+                "lambda:DeleteFunctionConcurrency",
+                "lambda:PutFunctionConcurrency"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

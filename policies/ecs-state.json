@@ -1,0 +1,36 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "ecs:ListServices",
+                "ecs:ListTasks",
+                "ecs:StopTask",
+                "ecs:DescribeServices",
+                "ecs:DescribeTasks",
+                "ecs:ListContainerInstances",
+                "ecs:DescribeContainerInstances"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:StartInstances",
+                "ec2:StopInstances",
+                "ec2:DescribeInstanceStatus",
+                "ec2:DescribeInstances"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "autoscaling:DescribeAutoScalingInstances"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

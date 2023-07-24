@@ -1,0 +1,22 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeInstanceStatus",
+                "ec2:DescribeInstances",
+                "ec2:DescribeSubnets",
+                "elasticloadbalancing:DetachLoadBalancerFromSubnets",
+                "elasticloadbalancing:AttachLoadBalancerToSubnets",
+                "elasticloadbalancing:DescribeLoadBalancers",
+                "ec2:CreateNetworkAcl",
+                "ec2:CreateNetworkAclEntry",
+                "ec2:DescribeNetworkAcls",
+                "ec2:ReplaceNetworkAclAssociation",
+                "ec2:DeleteNetworkAcl"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
