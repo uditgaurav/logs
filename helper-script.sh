@@ -24,37 +24,19 @@ abort() {
 # trap abort signal
 trap "abort" SIGINT SIGTERM
 
-echo "[Info]: Stopping service '$SERVICE_NAME' with mask '$MASK' and duration '$DURATION'"
+# Initialize variables
+SERVICE_NAME=""
+MASK=""
+DURATION=""
 
-if [[ "$MASK" == "enable" ]]; then
-  echo "[Chaos]: Mask the $SERVICE_NAME service"
-  systemctl mask "$SERVICE_NAME" || {
-    echo "Error: Unable to mask the service"
-    exit 1
-  }
-fi
+# Read the flags
+while getopts "s:m:d:" opt; do
+  case $opt in
+    s) SERVICE_NAME="$OPTARG" ;;
+    m) MASK="$OPTARG" ;;
+    d) DURATION="$OPTARG" ;;
+    *) echo "Invalid option: -$OPTARG" >&2; exit 1 ;;
+  esac
+done
 
-echo "[Chaos]: Stopping the $SERVICE_NAME service"
-systemctl stop "$SERVICE_NAME" || {
-  echo "Error: Unable to stop the service"
-  exit 1
-}
-
-echo "[Wait]: Wait for Chaos duration for $DURATION seconds"
-sleep "$DURATION"
-
-if [[ "$MASK" == "enable" ]]; then
-  echo "[Chaos]: Unmask the $SERVICE_NAME service"
-  systemctl unmask "$SERVICE_NAME" || {
-    echo "Error: Unable to unmask the service"
-    exit 1
-  }
-fi
-
-echo "[Chaos]: Starting the $SERVICE_NAME service"
-systemctl start "$SERVICE_NAME" || {
-  echo "Error: Unable to start the service"
-  exit 1
-}
-
-echo "[Info]: The service started successfully"
+echo "[Info]: Stopping service
