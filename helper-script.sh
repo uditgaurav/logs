@@ -10,7 +10,7 @@ abort() {
       echo "[ABORT]: Error unable to unmask the service"
       exit 1
     }
-  }
+  fi
 
   systemctl start "$SERVICE_NAME" || {
     echo "Unable to start the service"
@@ -62,7 +62,7 @@ if [[ "$MASK" == "enable" ]]; then
 fi
 
 # Wait for the given duration
-echo "[Info]: Waiting for $DURATION seconds"
+echo "[Info]: Waiting for chaos duration of $DURATION seconds"
 sleep "$DURATION"
 
 # Unmask the service if needed
@@ -81,4 +81,4 @@ systemctl start "$SERVICE_NAME" || {
   exit 1
 }
 
-echo "[Info]: Completed"
+echo "[Info]: Chaos injection completed"
