@@ -1,0 +1,658 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hce
+  namespace: hce
+
+---
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+allowHostDirVolumePlugin: true
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: true
+allowHostPorts: false
+allowPrivilegeEscalation: true
+allowPrivilegedContainer: true
+allowedCapabilities:
+  - NET_ADMIN
+  - SYS_ADMIN
+defaultAddCapabilities: []
+fsGroup:
+  type: MustRunAs
+groups: []
+metadata:
+  name: litmus-scc
+readOnlyRootFilesystem: false
+requiredDropCapabilities: []
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: MustRunAs
+supplementalGroups:
+  type: RunAsAny
+users:
+  - system:serviceaccount:hce:argo-chaos
+  - system:serviceaccount:hce:litmus-admin
+  - system:serviceaccount:hce:hce
+volumes:
+  - configMap
+  - downwardAPI
+  - emptyDir
+  - hostPath
+  - persistentVolumeClaim
+  - projected
+  - secret
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: litmus
+    # provide unique instance-id if applicable
+    # app.kubernetes.io/instance: litmus-abcxzy
+    app.kubernetes.io/version: v2.0.0
+    app.kubernetes.io/component: operator
+    app.kubernetes.io/part-of: litmus
+    app.kubernetes.io/managed-by: kubectl
+  name: chaos-operator-ce
+  namespace: hce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: chaos-operator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: litmus
+        # provide unique instance-id if applicable
+        # app.kubernetes.io/instance: litmus-abcxzy
+        app.kubernetes.io/version: latest
+        app.kubernetes.io/component: operator
+        app.kubernetes.io/part-of: litmus
+        app.kubernetes.io/managed-by: kubectl
+        name: chaos-operator
+    spec:
+      serviceAccountName: hce
+      #{TOLERATIONS}
+      #{NODE_SELECTOR}
+      containers:
+        - name: chaos-operator
+          image: chaosnative/chaos-operator:1.21.0
+          securityContext:
+            runAsUser: 2000
+            allowPrivilegeEscalation: false
+          command:
+            - "./chaos-operator"
+          args:
+            - -leader-elect=true
+          imagePullPolicy: Always
+          env:
+            - name: CHAOS_RUNNER_IMAGE
+              value: chaosnative/chaos-runner:1.21.0
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: 'chaos-operator'
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            requests:
+              memory: "300Mi"
+              cpu: "125m"
+              ephemeral-storage: "500Mi"
+            limits:
+              memory: "500Mi"
+              cpu: "225m"
+              ephemeral-storage: "1Gi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: chaos-exporter
+    release: prometheus-stack
+  name: chaos-exporter
+  namespace: hce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chaos-exporter
+  template:
+    metadata:
+      labels:
+        app: chaos-exporter
+        release: prometheus-stack
+    spec:
+      #{TOLERATIONS}
+      #{NODE_SELECTOR}
+      containers:
+        - image: chaosnative/chaos-exporter:1.21.0
+          imagePullPolicy: Always
+          name: chaos-exporter
+          securityContext:
+            runAsUser: 2000
+            allowPrivilegeEscalation: false
+          ports:
+            - containerPort: 8080
+              name: tcp
+          env:
+            - name: TSDB_SCRAPE_INTERVAL
+              value: '10'
+            - name: INJECTION_TIME_FILTER
+              value: 'disable'
+            - name: WATCH_NAMESPACE
+              value: hce
+          resources:
+            requests:
+              memory: "300Mi"
+              cpu: "125m"
+              ephemeral-storage: "500Mi"
+            limits:
+              memory: "500Mi"
+              cpu: "225m"
+              ephemeral-storage: "1Gi"
+      serviceAccountName: hce
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: chaos-exporter
+  name: chaos-exporter
+  namespace: hce
+spec:
+  ports:
+    - port: 8080
+      name: tcp
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: chaos-exporter
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argo-chaos
+  namespace: hce
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: chaos-role
+  namespace: hce
+rules:
+  # for managing the pods created by workflow controller to implement individual steps in the workflow
+  - apiGroups: [""]
+    resources: ["pods", "services"]
+    verbs: ["create", "get", "watch", "patch", "delete", "list"]
+
+  # for tracking & getting logs of the pods created by workflow controller to implement individual steps in the workflow
+  - apiGroups: ['']
+    resources: ['pods/log', 'pods/exec']
+    verbs: ['get', 'watch', 'create', 'delete', 'patch']
+  - apiGroups: ['']
+    resources: ['secrets', 'configmaps']
+    verbs: ['get', 'watch', 'create', 'patch']
+
+  # for creation & deletion of application in predefined workflows
+  - apiGroups: ['apps']
+    resources: ['deployments']
+    verbs: ['delete']
+  - apiGroups: ['apps']
+    resources: ['deployments', 'statefulsets']
+    verbs: ['get', 'watch', 'patch' , 'create']
+
+  # for creation, status polling and deletion of litmus chaos resources used within a chaos workflow
+  - apiGroups: ["litmuschaos.io"]
+    resources: ["chaosengines", "chaosexperiments", "chaosresults", "chaosschedules"]
+    verbs: ["create", "list", "get", "patch", "delete", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: chaos-role-binding
+  namespace: hce
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: chaos-role
+subjects:
+  - kind: ServiceAccount
+    name: argo-chaos
+    namespace: hce
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workflow-controller-configmap
+  namespace: hce
+data:
+  executor: |
+    imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 0.15
+        memory: 512Mi
+  instanceID: de2a9110-5be5-4b6e-82c7-cda1a8cc603b
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: workflow-controller-metrics
+  namespace: hce
+spec:
+  ports:
+    - name: metrics
+      port: 9090
+      protocol: TCP
+      targetPort: 9090
+  selector:
+    app: workflow-controller
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workflow-controller
+  namespace: hce
+spec:
+  selector:
+    matchLabels:
+      app: workflow-controller
+  template:
+    metadata:
+      labels:
+        app: workflow-controller
+    spec:
+      #{TOLERATIONS}
+      #{NODE_SELECTOR}
+      containers:
+        - args:
+            - --configmap
+            - workflow-controller-configmap
+            - --executor-image
+            -  chaosnative/argoexec:v3.4.10
+            - --namespaced
+          command:
+            - workflow-controller
+          image: chaosnative/workflow-controller:v3.4.10
+          name: workflow-controller
+          securityContext:
+            runAsUser: 2000
+            allowPrivilegeEscalation: false
+          env:
+            - name: LEADER_ELECTION_DISABLE
+              value: "true"
+            - name: POD_NAMES
+              value: "v1"
+          resources:
+            requests:
+              memory: "300Mi"
+              cpu: "125m"
+              ephemeral-storage: "500Mi"
+            limits:
+              memory: "500Mi"
+              cpu: "225m"
+              ephemeral-storage: "1Gi"
+      serviceAccountName: hce
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: subscriber-config
+  namespace: hce
+data:
+  SERVER_ADDR: https://app.harness.io/gratis/chaos/kserver/api
+  INFRA_SCOPE: namespace
+  VERSION: 1.21.0
+  START_TIME: "1696600753310"
+  SKIP_SSL_VERIFY: "false"
+  IS_INFRA_CONFIRMED: "false"
+  COMPONENTS: |
+    DEPLOYMENTS: ["app=chaos-exporter", "name=chaos-operator", "app=workflow-controller"]
+  CONNECTION_TYPE: https
+  IS_SECRET_ENABLED: "true"
+  
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: subscriber-secret
+  namespace: hce
+stringData:
+  INFRA_ID: de2a9110-5be5-4b6e-82c7-cda1a8cc603b
+  ACCESS_KEY: Hi7arSW53QfwVihocbl6aMeO8b5J0e1R
+  CUSTOM_TLS_CERT: |
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: subscriber
+  namespace: hce
+  labels:
+    app: subscriber
+spec:
+  selector:
+    matchLabels:
+      app: subscriber
+  template:
+    metadata:
+      labels:
+        app: subscriber
+    spec:
+      #{TOLERATIONS}
+      #{NODE_SELECTOR}
+      serviceAccountName: hce
+      containers:
+        - name: subscriber
+          image: chaosnative/harness-chaos-subscriber:1.21.0
+          imagePullPolicy: Always
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - curl --fail -s https://app.harness.io/gratis/chaos/kserver/api/status -o /dev/null
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            runAsUser: 2000
+            allowPrivilegeEscalation: false
+          envFrom:
+            - configMapRef:
+                name: subscriber-config
+            - secretRef:
+                name: subscriber-secret
+          env:
+            - name: INFRA_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            requests:
+              memory: "300Mi"
+              cpu: "125m"
+              ephemeral-storage: "500Mi"
+            limits:
+              memory: "500Mi"
+              cpu: "225m"
+              ephemeral-storage: "1Gi"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: infra-role
+  namespace: hce
+  labels:
+    name: infra-role
+rules:
+  # ***********************************************************************************************
+  # Permissions needed for orchestration and monitoring chaos by chaos-operator and chaos-exporter
+  # ***********************************************************************************************
+
+  # for mounting the secrets to the chaos-runner pod
+  - apiGroups: [ "" ]
+    resources: ["secrets" ]
+    verbs: [ "get", "list" ]
+
+  # for deriving the owner references of the operator pod
+  - apiGroups: [ "apps" ]
+    resources: [ "deployments", "replicasets"]
+    verbs: [ "get", "list" ]
+
+  # for the cleanup of jobs in abort scenarios
+  - apiGroups: [ "batch" ]
+    resources: [ "jobs" ]
+    verbs: [ "get", "list", "create", "deletecollection" ]
+
+  # for creation and management of the chaos-runner pod
+  - apiGroups: [ "" ]
+    resources: [ "pods"]
+    verbs: ["get", "create", "update", "patch", "delete", "list", "watch", "deletecollection" ]
+
+  # for creating of events, monitoring and leader election
+  - apiGroups: [ "" ]
+    resources: [ "configmaps", "events", "services" ]
+    verbs: ["get", "create", "update", "patch", "list", "watch" ]
+
+  # for creation, status polling and deletion of litmus chaos resources used within a chaos workflow
+  - apiGroups: [ "litmuschaos.io" ]
+    resources: [ "chaosengines", "chaosexperiments", "chaosresults" ]
+    verbs: ["get", "create", "update", "patch", "delete", "list", "watch", "deletecollection" ]
+
+  # for managing the finalizers to the primary resource
+  - apiGroups: [ "litmuschaos.io" ]
+    resources: [ "chaosengines/finalizers" ]
+    verbs: [ "update" ]
+
+  # for managing the leader elections in multi-replicas scenario
+  - apiGroups: [ "coordination.k8s.io" ]
+    resources: [ "leases" ]
+    verbs: [ "get","create","list","update","delete" ]
+
+  # ******************************************************************************************************
+  # Permissions needed to manage and communicate between control plane and execution plane by subscriber
+  # *******************************************************************************************************
+
+  - apiGroups: [ "" ]
+    resources: [ "configmaps", "secrets" ]
+    verbs: [ "get", "create", "delete", "update", "patch" ]
+
+  - apiGroups: [ "" ]
+    resources: [ "pods/log" ]
+    verbs: [ "get", "list", "watch" ]
+
+  - apiGroups: [ "" ]
+    resources: [ "pods", "services" ]
+    verbs: [ "get", "list", "watch" ]
+
+  - apiGroups: [ "litmuschaos.io" ]
+    resources: [ "chaosengines", "chaosschedules", "chaosresults" ]
+    verbs: [ "get", "list", "create", "delete", "update", "watch", "patch" ]
+
+  - apiGroups: [ "apps.openshift.io" ]
+    resources: [ "deploymentconfigs" ]
+    verbs: [ "get", "list" ]
+
+  - apiGroups: [ "apps" ]
+    resources: [ "deployments" ]
+    verbs: [ "delete" ]
+  - apiGroups: [ "apps" ]
+    resources: [ "deployments", "daemonsets", "replicasets", "statefulsets" ]
+    verbs: [ "get", "list" ]
+  - apiGroups: [ "argoproj.io" ]
+    resources:
+      [
+        "workflows",
+        "workflows/finalizers",
+        "workflowtemplates",
+        "workflowtemplates/finalizers",
+        "cronworkflows",
+        "cronworkflows/finalizers",
+        "rollouts",
+      ]
+    verbs: [ "get", "list", "create", "delete", "update", "watch", "patch" ]
+
+  # ************************************************************************
+  # Permissions needed to orchestrate the workflows by workflow controller
+  # ************************************************************************
+
+  - apiGroups: [ "" ]
+    resources: [ "pods", "pods/exec" ]
+    verbs: [ "create", "get", "list", "watch", "update", "patch", "delete" ]
+  - apiGroups: [ "" ]
+    resources: [ "configmaps" ]
+    verbs: [ "get", "watch", "list" ]
+  - apiGroups: [ "" ]
+    resources: [ "persistentvolumeclaims" ]
+    verbs: [ "create", "delete" ]
+  - apiGroups: [ "argoproj.io" ]
+    resources: [ "workflows", "workflows/finalizers" ]
+    verbs: [ "get", "list", "watch", "update", "patch", "delete", "create" ]
+  - apiGroups: [ "argoproj.io" ]
+    resources: [ "workflowtemplates", "workflowtemplates/finalizers", "workflowtasksets", "workflowartifactgctasks" ]
+    verbs: [ "get", "list", "watch" ]
+  - apiGroups: [ "argoproj.io" ]
+    resources: [ "workflowtaskresults" ]
+    verbs: [ "list", "watch", "deletecollection" ]
+  - apiGroups: [ "" ]
+    resources: [ "serviceaccounts" ]
+    verbs: [ "get", "list" ]
+  - apiGroups: [ "" ]
+    resources: [ "secrets" ]
+    verbs: [ "get" ]
+  - apiGroups: [ "argoproj.io" ]
+    resources: [ "cronworkflows", "cronworkflows/finalizers" ]
+    verbs: [ "get", "list", "watch", "update", "patch", "delete" ]
+  - apiGroups: [ "" ]
+    resources: [ "events" ]
+    verbs: [ "create", "patch" ]
+  - apiGroups: [ "policy" ]
+    resources: [ "poddisruptionbudgets" ]
+    verbs: [ "create", "get", "delete" ]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: infra-role-binding
+  namespace: hce
+subjects:
+  - kind: ServiceAccount
+    name: hce
+    namespace: hce
+roleRef:
+  kind: Role
+  name: infra-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: litmus-admin
+  namespace: hce
+  labels:
+    name: litmus-admin
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: litmus-admin
+  namespace: hce
+  labels:
+    name: litmus-admin
+rules:
+  # ***************************************************************************************
+  # Permissions needed for preparing and monitor the chaos resources by chaos-runner
+  # ***************************************************************************************
+
+  # The chaos operator watches the chaosengine resource and orchestrates the chaos experiment..
+  ## .. by creating the chaos-runner
+
+  # for creating and monitoring the chaos-runner pods
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["create", "delete", "get", "list", "patch", "update", "deletecollection"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "get", "list", "patch", "update"]
+
+    # for fetching configmaps and secrets to inject into chaos-runner pod (if specified)
+  - apiGroups: [""]
+    resources: ["secrets", "configmaps"]
+    verbs: ["get", "list"]
+
+    # for tracking & getting logs of the pods created by chaos-runner to implement individual steps in the runner
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get", "list", "watch"]
+
+    # for configuring and monitor the experiment job by chaos-runner pod
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "list", "get", "delete", "deletecollection"]
+
+    # ********************************************************************
+    # Permissions needed for creation and discovery of chaos experiments
+    # ********************************************************************
+
+    # The helper pods are created by experiment to perform the actual chaos injection ...
+    # ... for a period of chaos duration
+
+    # for creating and managing to execute comands inside target container
+  - apiGroups: [""]
+    resources: ["pods/exec", "pods/eviction", "replicationcontrollers"]
+    verbs: ["get", "list", "create"]
+
+    # for tracking & getting logs of the pods created by experiment pod to implement individual steps in the experiment
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get", "list", "watch"]
+
+    # for creating and monitoring liveness services or monitoring target app services during chaos injection
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["create", "get", "list"]
+
+    # for checking the app parent resources as deployments or sts and are eligible chaos candidates
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets"]
+    verbs: ["list", "get", "patch", "update"]
+
+    # for checking the app parent resources as replicasets and are eligible chaos candidates
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["list", "get"]
+
+    # for checking the app parent resources as deamonsets and are eligible chaos candidates
+  - apiGroups: ["apps"]
+    resources: ["daemonsets"]
+    verbs: ["list", "get"]
+
+    # for checking (openshift) app parent resources if they are eligible chaos candidates
+  - apiGroups: ["apps.openshift.io"]
+    resources: ["deploymentconfigs"]
+    verbs: ["list", "get"]
+
+    # for checking (argo) app parent resources if they are eligible chaos candidates
+  - apiGroups: ["argoproj.io"]
+    resources: ["rollouts"]
+    verbs: ["list", "get"]
+
+  # performs CRUD operations on the network policies
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["create","delete","list","get"]
+
+    # for creation, status polling and deletion of litmus chaos resources used within a chaos workflow
+  - apiGroups: ["litmuschaos.io"]
+    resources: ["chaosengines", "chaosexperiments", "chaosresults"]
+    verbs: ["create", "list", "get", "patch", "update", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: litmus-admin
+  namespace: hce
+  labels:
+    name: litmus-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: litmus-admin
+subjects:
+  - kind: ServiceAccount
+    name: litmus-admin
+    namespace: hce
