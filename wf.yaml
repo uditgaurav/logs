@@ -1,42 +1,45 @@
+---
 kind: Workflow
 apiVersion: argoproj.io/v1alpha1
 metadata:
-  name: alb-az-down-1658828120
-  namespace: hce
+  name: aws-lambda-update-function-timeout-1658947438
+  namespace: litmus
+  creationTimestamp: null
   labels:
-    subject: alb-az-down_litmus
+    subject: aws-lambda-update-function-timeout_litmus
 spec:
   templates:
     - name: custom-chaos
+
       steps:
         - - name: install-chaos-faults
             template: install-chaos-faults
-        - - name: alb-az-down-1ap
-            template: alb-az-down-1ap
+        - - name: lambda-update-function-timeout-mgk
+            template: lambda-update-function-timeout-mgk
         - - name: cleanup-chaos-resources
             template: cleanup-chaos-resources
     - name: install-chaos-faults
       inputs:
         artifacts:
-          - name: alb-az-down-1ap
-            path: /tmp/alb-az-down-1ap.yaml
+          - name: lambda-update-function-timeout-mgk
+            path: /tmp/lambda-update-function-timeout-mgk.yaml
             raw:
               data: |
                 apiVersion: litmuschaos.io/v1alpha1
                 description:
                   message: |
-                    It injects AZ down chaos on alb for a certain chaos duration.
+                    Updating timeout allocated to lambda function
                 kind: ChaosExperiment
                 metadata:
-                  name: alb-az-down
+                  name: lambda-update-function-timeout
                   labels:
-                    name: alb-az-down
+                    name: lambda-update-function-timeout
                     app.kubernetes.io/part-of: litmus
                     app.kubernetes.io/component: chaosexperiment
                     app.kubernetes.io/version: ci
                 spec:
                   definition:
-                    scope: Namespaced
+                    scope: Cluster
                     permissions:
                       - apiGroups:
                           - ""
@@ -63,6 +66,7 @@ spec:
                       - apiGroups:
                           - ""
                         resources:
+                          - secrets
                           - configmaps
                         verbs:
                           - get
@@ -83,37 +87,6 @@ spec:
                           - get
                           - list
                           - create
-                      - apiGroups:
-                          - apps
-                        resources:
-                          - deployments
-                          - statefulsets
-                          - replicasets
-                          - daemonsets
-                        verbs:
-                          - list
-                          - get
-                      - apiGroups:
-                          - apps.openshift.io
-                        resources:
-                          - deploymentconfigs
-                        verbs:
-                          - list
-                          - get
-                      - apiGroups:
-                          - ""
-                        resources:
-                          - replicationcontrollers
-                        verbs:
-                          - get
-                          - list
-                      - apiGroups:
-                          - argoproj.io
-                        resources:
-                          - rollouts
-                        verbs:
-                          - list
-                          - get
                       - apiGroups:
                           - batch
                         resources:
@@ -137,86 +110,89 @@ spec:
                           - patch
                           - update
                           - delete
-                    image: docker.io/chaosnative/chaos-go-runner:1.30.0
+                      - apiGroups:
+                          - ""
+                        resources:
+                          - nodes
+                        verbs:
+                          - get
+                          - list
+                    image: chaosnative/chaos-go-runner:main-latest
                     imagePullPolicy: Always
                     args:
                       - -c
-                      - ./experiments -name alb-az-down
+                      - ./experiments -name lambda-update-function-timeout
                     command:
                       - /bin/bash
                     env:
-                      - name: TOTAL_CHAOS_DURATION
-                        value: "30"
-                      - name: RAMP_TIME
-                        value: ""
-                      - name: CHAOS_INTERVAL
-                        value: "30"
-                      - name: LOAD_BALANCER_ARN
-                        value: ""
-                      - name: REGION
-                        value: ""
-                      - name: SEQUENCE
-                        value: parallel
-                      - name: ZONES
-                        value: ""
-                      - name: AWS_SHARED_CREDENTIALS_FILE
-                        value: /tmp/cloud_config.yml
-                      - name: DEFAULT_HEALTH_CHECK
-                        value: "false"
+                    - name: TOTAL_CHAOS_DURATION
+                      value: '30'
+                    - name: CHAOS_INTERVAL
+                      value: '30'
+                    - name: RAMP_TIME
+                      value: ''
+                    - name: FUNCTION_NAME
+                      value: ''
+                    - name: FUNCTION_TIMEOUT
+                      value: ''
+                    - name: REGION
+                      value: ''
+                    - name: AWS_SHARED_CREDENTIALS_FILE
+                      value: '/tmp/cloud_config.yml'
+                    - name: SEQUENCE
+                      value: 'parallel'
                     labels:
-                      name: alb-az-down
+                      name: lambda-update-function-timeout
                       app.kubernetes.io/part-of: litmus
                       app.kubernetes.io/component: experiment-job
                       app.kubernetes.io/version: ci
                     secrets:
                       - name: cloud-secret
                         mountPath: /tmp/
+
       container:
         name: ""
-        image: docker.io/chaosnative/k8s:1.30.0
+        image: docker.io/chaosnative/k8s:1.15.0
         command:
           - sh
-          - "-c"
+          - -c
         args:
-          - kubectl apply -f /tmp/ -n {{workflow.parameters.adminModeNamespace}} && sleep 30
-    - name: alb-az-down-1ap
+          - kubectl apply -f /tmp/ -n
+            {{workflow.parameters.adminModeNamespace}} && sleep 30
+
+    - name: lambda-update-function-timeout-mgk
       inputs:
         artifacts:
-          - name: alb-az-down-1ap
-            path: /tmp/chaosengine-alb-az-down-1ap.yaml
+          - name: lambda-update-function-timeout-mgk
+            path: /tmp/chaosengine-lambda-update-function-timeout-mgk.yaml
             raw:
               data: |
                 apiVersion: litmuschaos.io/v1alpha1
                 kind: ChaosEngine
                 metadata:
                   namespace: "{{workflow.parameters.adminModeNamespace}}"
-                  generateName: alb-az-down-1ap
+                  generateName: lambda-update-function-timeout-mgk
                   labels:
-                    instance_id: 6c836c65-aaa8-44d6-8b83-9a481bb1c99f
-                    context: alb-az-down-1ap_litmus
-                    workflow_name: alb-az-down-1658828120
+                    instance_id: 3b589183-7d6f-402c-835c-6a0638c00b96
+                    workflow_name: lambda-update-function-timeout-1658947438
                 spec:
                   engineState: active
                   chaosServiceAccount: litmus-admin
                   experiments:
-                    - name: alb-az-down
+                    - name: lambda-update-function-timeout
                       spec:
                         components:
                           env:
                             - name: TOTAL_CHAOS_DURATION
-                              value: "30"
+                              value: '30'
                             - name: CHAOS_INTERVAL
-                              value: "30"
-                            - name: LOAD_BALANCER_ARN
-                              value: ""
+                              value: '30'
+                            - name: FUNCTION_NAME
+                              value: ''
+                            - name: FUNCTION_TIMEOUT
+                              value: ''
                             - name: REGION
-                              value: ""
-                            - name: SEQUENCE
-                              value: parallel
-                            - name: ZONES
-                              value: ""
-                          experimentImagePullSecrets:
-                            - name: test
+                              value: ''
                         probe:
                           - name: healthcheck
                             type: cmdProbe
@@ -227,51 +203,59 @@ spec:
                               interval: 1s
                               stopOnFailure: false
                             cmdProbe/inputs:
-                              command: ./healthcheck -name aws-alb
+                              command: ./healthcheck -name lambda-update-function
                               source:
-                                image: docker.io/chaosnative/chaos-go-runner:1.30.0
+                                image: chaosnative/chaos-go-runner:main-latest
                                 inheritInputs: true
-                                imagePullSecrets:
-                                  - name: test
+                                volumeMount:
+                                  - mountPath: /var/run/secrets/eks.amazonaws.com/serviceaccount
+                                    name: aws-iam-token
+                                    readOnly: true
+                                volumes:
+                                  - name: aws-iam-token
+                                    projected:
+                                      defaultMode: 420
+                                      sources:
+                                        - serviceAccountToken:
+                                            audience: sts.amazonaws.com
+                                            expirationSeconds: 86400
+                                            path: token
                               comparator:
                                 type: string
                                 criteria: contains
                                 value: "[P000]"
-                  annotationCheck: "false"
-                  components:
-                    runner:
-                      imagePullSecrets:
-                        - name: test
       metadata:
         labels:
           weight: "10"
       container:
         name: ""
-        image: docker.io/chaosnative/litmus-checker:1.30.0
+        image: docker.io/chaosnative/litmus-checker:1.15.0
         command:
           - ./var/run/checker
         args:
-          - "-file=/tmp/chaosengine-alb-az-down-1ap.yaml"
-          - "-saveName=/tmp/engine-name"
+          - -file=/tmp/chaosengine-lambda-update-function-timeout-mgk.yaml
+          - -saveName=/tmp/engine-name
+
     - name: cleanup-chaos-resources
       container:
         name: ""
-        image: docker.io/chaosnative/k8s:1.30.0
+        image: docker.io/chaosnative/k8s:1.15.0
         command:
           - sh
-          - "-c"
+          - -c
         args:
-          - "kubectl delete chaosengine -l 'instance_id in (6c836c65-aaa8-44d6-8b83-9a481bb1c99f, )' -n {{workflow.parameters.adminModeNamespace}} "
+          - "kubectl delete chaosengine -l 'instance_id in
+            (3b589183-7d6f-402c-835c-6a0638c00b96, )' -n
+            {{workflow.parameters.adminModeNamespace}} "
+
   entrypoint: custom-chaos
   arguments:
     parameters:
       - name: adminModeNamespace
-        value: hce
+        value: litmus
   serviceAccountName: argo-chaos
   podGC:
     strategy: OnWorkflowCompletion
   securityContext:
     runAsUser: 1000
     runAsNonRoot: true
-  imagePullSecrets:
-    - name: test
