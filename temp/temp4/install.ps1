@@ -17,12 +17,16 @@ param (
     [string]$CustomTlsCertificate = "",
     [string]$HttpProxy = "",
     [string]$HttpClientTimeout = "30s",
-    [string]$InstallMode = "online"
+    [string]$InstallMode = "online"  # new parameter to determine installation mode
 )
 
 # Accept the Testlimit EULA
 function Accept-TestlimitEULA {
-    $architectureSuffix = if ([Environment]::Is64BitOperatingSystem) { "64" } else { "" }
+    if ([Environment]::Is64BitOperatingSystem) {
+        $architectureSuffix = "64"
+    } else {
+        $architectureSuffix = ""
+    }
     $testlimitExecutable = "testlimit$architectureSuffix.exe"
     $testlimitPath = Join-Path -Path $ChaosBasePath -ChildPath ("Testlimit\" + $testlimitExecutable)
     $arguments = "/accepteula /m 1"
@@ -237,7 +241,7 @@ try {
             Destination = "$ChaosBasePath\testlimit.zip";
             ExecutablePath = "$ChaosBasePath\Testlimit";
             ExtractPath = "$ChaosBasePath\Testlimit";
-            BinaryName = "testlimit$([Environment]::Is64BitOperatingSystem ? '64' : '32').exe"
+            BinaryName = if ([Environment]::Is64BitOperatingSystem) { "testlimit64.exe" } else { "testlimit32.exe" }
         }
     )
 
