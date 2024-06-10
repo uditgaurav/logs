@@ -17,7 +17,7 @@ param (
     [string]$CustomTlsCertificate = "",
     [string]$HttpProxy = "",
     [string]$HttpClientTimeout = "30s",
-    [string]$InstallMode = "online"  # new parameter to determine installation mode
+    [string]$InstallMode = "online"
 )
 
 # Accept the Testlimit EULA
