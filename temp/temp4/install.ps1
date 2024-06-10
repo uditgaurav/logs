@@ -6,7 +6,7 @@ param (
     [string]$AccessKey = "",
     [string]$ServerUrl = "",
     [string]$LogDirectory = "C:\\HCE\\Logs",
-    [string]$ChaosBasePath = "C:\\HCE",
+    [string]$ChaosBasePath = "C:\\test",
     [int]$TaskPollIntervalSeconds = 5,
     [int]$TaskUpdateIntervalSeconds = 5,
     [int]$UpdateRetries = 5,
@@ -17,7 +17,7 @@ param (
     [string]$CustomTlsCertificate = "",
     [string]$HttpProxy = "",
     [string]$HttpClientTimeout = "30s",
-    [string]$InstallMode = "online"  # new parameter to determine installation mode
+    [string]$InstallMode = "online"
 )
 
 # Accept the Testlimit EULA
