@@ -6,7 +6,7 @@ param (
     [string]$AccessKey = "",
     [string]$ServerUrl = "",
     [string]$LogDirectory = "C:\\HCE\\Logs",
-    [string]$ChaosBasePath = "C:\\test",
+    [string]$ChaosBasePath = "C:\\HCE",
     [int]$TaskPollIntervalSeconds = 5,
     [int]$TaskUpdateIntervalSeconds = 5,
     [int]$UpdateRetries = 5,
@@ -208,7 +208,7 @@ function Verify-AndExportBinary {
 
     try {
         & $binaryFullPath
-        Write-Host "$BinaryName executed successfully."
+        Write-Host "$BinaryName is installed and available."
     } catch {
         Write-Host "$BinaryName not found in PATH. Checking in $BinaryPath..."
         if (Test-Path $binaryFullPath) {
