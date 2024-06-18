@@ -237,7 +237,7 @@ try {
             Destination = "$ChaosBasePath\testlimit.zip";
             ExecutablePath = "$ChaosBasePath\Testlimit";
             ExtractPath = "$ChaosBasePath\Testlimit";
-            BinaryName = "testlimit$([Environment]::Is64BitOperatingSystem ? '64' : '32').exe"
+            BinaryName = if ([Environment]::Is64BitOperatingSystem) { "testlimit64.exe" } else { "testlimit32.exe" }
         }
     )
 
